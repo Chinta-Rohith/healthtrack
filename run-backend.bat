@@ -25,6 +25,6 @@ echo [HealthTrack] Starting Spring Boot backend on http://localhost:8080 ...
 call "C:\Program Files\JetBrains\IntelliJ IDEA 2026.1.3\plugins\maven\lib\maven3\bin\mvn.cmd" spring-boot:run
 if errorlevel 1 (
     echo.
-    echo [HealthTrack] Backend failed to start. Check the error above (e.g. wrong MySQL password in .env).
+    echo [HealthTrack] Backend failed to start. Check the error above or verify .env settings.
     pause
 )
