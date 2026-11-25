@@ -11,6 +11,7 @@ HealthTrack is a full-stack healthcare symptom tracking web application built wi
 - [Main Features](#main-features)
 - [Technology Stack](#technology-stack)
 - [Architecture Explanation](#architecture-explanation)
+- [Key Design Decisions](#key-design-decisions)
 - [Database Schema](#database-schema)
 - [API Documentation](#api-documentation)
 - [Prerequisites](#prerequisites)
@@ -100,10 +101,16 @@ HealthTrack/
 └── README.md
 ```
 
-### Key Design Decisions
-- **Constructor Injection**: All backend services, controllers, and config beans use constructor-based dependency injection (`Clock` is injected as a UTC bean for deterministic testing).
-- **Consistent UTC Timestamps**: The backend generates `Instant.now(clock)` in UTC, stores it in MySQL `DATETIME(6)` with `hibernate.jdbc.time_zone=UTC`, and serializes ISO-8601 UTC strings (`2026-11-25T12:55:00Z`) so the browser renders dates/times accurately in the user's local timezone.
-- **Whitespace Normalization**: Incoming JSON strings are trimmed automatically via Jackson customization before Bean Validation runs, ensuring whitespace-only strings (`"   "`) are rejected cleanly.
+---
+
+## Key Design Decisions
+
+- **Layered Separation & Constructor Injection**: Splitting the backend into `controller`, `service`, `repository`, `entity`, `dto`, `exception`, and `config` keeps HTTP routing, business logic, and persistence cleanly testable. All dependencies (including a UTC `Clock` bean) use constructor injection so unit tests run deterministically with fixed timestamps.
+- **Consistent UTC Storage & Local Browser Formatting**: `SymptomService` generates `Instant.now(clock)` in UTC, Hibernate persists `DATETIME(6)` with `hibernate.jdbc.time_zone=UTC`, and Jackson serializes ISO-8601 UTC strings (`Z`) so React renders dates and times accurately in each user's local timezone.
+- **Pre-Validation Whitespace Normalization**: `WebConfig` registers a Jackson `String` deserializer that trims leading/trailing whitespace prior to Bean Validation, ensuring whitespace-only descriptions (`"   "`) fail `@NotBlank` cleanly instead of slipping through as non-empty text.
+- **Chronological 30-Day Aggregation via `TreeMap`**: `GET /api/symptoms/{patientId}/trends` filters records from the past 30 UTC days, groups by `LocalDate` inside a `TreeMap` (guaranteeing chronological sorting), and computes daily averages without fabricating points on days with zero logs.
+- **Patient Isolation & Composite Indexing**: All read and trend queries filter strictly by `patientId` via parameterized Spring Data JPA methods backed by a composite index `idx_symptom_patient_timestamp (patient_id, timestamp)`.
+- **Sanitized Centralized Errors & Duplicate-Submit Protection**: `@RestControllerAdvice` (`GlobalExceptionHandler`) maps validation, malformed JSON, and database outages (`503`) to consistent JSON error payloads without leaking stack traces or DB credentials, while `SymptomForm.jsx` disables submission while requests are in flight.
 
 ---
 
@@ -318,14 +325,15 @@ Covered scenarios (`SymptomForm.test.jsx`):
 
 ---
 
-## Screenshots
+## Application Views (Screenshots Overview)
 
-Add screenshots captured from your running local instance here before final submission:
+The UI implements five responsive views sharing a persistent sidebar and top patient-switcher bar:
 
-- `docs/screenshots/dashboard.png` — Main Dashboard with KPIs & 30-day trend chart
-- `docs/screenshots/log-symptom.png` — Symptom Logging form with severity selector
-- `docs/screenshots/symptom-history.png` — Chronological Symptom History table
-- `docs/screenshots/health-analytics.png` — 30-Day Health Analytics view
+- **Dashboard (`/`)**: Active patient banner (`PATIENT001` clearly marked as sample demonstration data), 4 KPI summary cards (total entries, average severity, peak severity, latest activity), 30-day severity trend chart, and recent symptom activity list.
+- **Log Symptoms (`/log`)**: Patient ID field, 500-character symptom description input with live counter, interactive 1–10 severity rating pills (`Mild`, `Moderate`, `High`, `Severe`), duplicate-submit protection, and inline validation + API status feedback.
+- **Symptom History (`/history`)**: Chronological ascending symptom table (oldest at top, latest entries at bottom with `Latest` indicator), search filter, readable local dates/times, and loading/empty/error states.
+- **Health Analytics (`/analytics`)**: Responsive Recharts 30-day daily average severity line chart with tooltip, grid lines, daily breakdown table, and honest empty-data handling.
+- **About HealthTrack (`/about`)**: Severity scale reference, architecture summary, and explicit non-diagnostic medical disclaimer.
 
 ---
 
