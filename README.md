@@ -347,4 +347,14 @@ Add screenshots captured from your running local instance here before final subm
 
 ## AI Usage
 
-OpenAI ChatGPT and Google Antigravity were used for development assistance during this project, including architecture planning, boilerplate and code suggestions, debugging assistance, and documentation drafting. All generated code, SQL scripts, configurations, and documentation were reviewed, tested, modified where necessary, and verified by the developer prior to submission.
+**Tools Used:** OpenAI ChatGPT and Google Antigravity.
+
+**Parts of Work Assisted:**
+- Architecture planning for the layered Spring Boot backend (`controller`, `service`, `repository`, `entity`, `dto`, `exception`, `config`) and React frontend (`components`, `pages`, `hooks`, `services`, `utils`).
+- Boilerplate and code suggestions for REST endpoints, DTO validation, Recharts 30-day trend visualization, Tailwind CSS UI layout, SQL scripts (`schema.sql`, `data.sql`), automated tests (JUnit 5/Mockito/MockMvc and Vitest/React Testing Library), and README documentation.
+
+**What Was Verified & Modified Afterwards:**
+- Removed deprecated explicit `hibernate.dialect` properties from `application.properties` and `application-test.properties` for clean Hibernate 6.6 auto-detection.
+- Added `@Check(constraints = "severity >= 1 AND severity <= 10")` on `SymptomLog` and configured optional root `.env` loading (`spring.config.import`) without committing secrets.
+- Added and fixed `run-backend.bat` (resolved `cmd.exe` parenthesis escaping) for reliable local Windows startup.
+- Verified all 11 backend tests (`mvn test`), all 5 frontend tests (`npm test`), production Vite build (`npm run build`), live MySQL 8.0 persistence (`healthtrack.symptom_logs`), live `POST`/`GET`/`trends` API validation, and live end-to-end browser workflows.
