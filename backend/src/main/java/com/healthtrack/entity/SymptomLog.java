@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.Check;
 
 import java.time.Instant;
 
@@ -21,6 +22,7 @@ import java.time.Instant;
         @Index(name = "idx_symptom_patient_timestamp", columnList = "patient_id, timestamp")
     }
 )
+@Check(constraints = "severity >= 1 AND severity <= 10")
 public class SymptomLog {
 
     @Id
